@@ -14,6 +14,12 @@
  .icon-box img{width:24px;height:24px;margin:2px;cursor:pointer}
  .icon-box img.sel{outline:2px solid #0f0}
 </style>
+
+<style>
+.label-no-bg{background:transparent!important;border:none!important;padding:0!important;pointer-events:none;white-space:nowrap;color:#fff}
+.leaflet-tooltip.label-no-bg::before{display:none!important}
+</style>
+
 </head>
 <body><div id="map"></div>
 
@@ -105,7 +111,7 @@ function init(img,iconList){
         let c=prompt('HEX цвет текста (ffffff):','#ffffff')||'#ffffff';
         if(c[0]!=='#') c='#'+c;
         if(!/^#?[0-9a-fA-F]{6}$/.test(c)) c='#ffffff';
-        l.bindTooltip(txt,{permanent:true,direction:'right',className:'label-no-bg',offset:[w/2+5,0]}).openTooltip();
+        l.bindTooltip(txt,{permanent:true,direction:'right',className:'label-no-bg',offset: [w/2 + 5, -(f.properties.iconH || 32)/2]}).openTooltip();
         styleTip(l.getTooltip(),s,c,map.getZoom());
         save(l,{icon:curIcon.url,iconW:w,iconH:h,label:txt,labelSize:s,labelColor:c});
       }else save(l,{icon:curIcon.url,iconW:w,iconH:h});
@@ -124,7 +130,7 @@ function init(img,iconList){
       m.layer.setIcon(L.icon({iconUrl:m.layer.options.icon.options.iconUrl,
                               iconSize:[nw,nh],iconAnchor:[nw/2,nh]}));
       const tt=m.layer.getTooltip();
-      if(tt){tt.options.offset=[nw/2+5,0];tt._updatePosition();}
+      if(tt){tt.options.offset=[nw/2+5,-nh/2];tt._updatePosition();}
     });
   });
 
@@ -172,7 +178,7 @@ function init(img,iconList){
             permanent: true,
             direction: 'right',
             className: 'label-no-bg',
-            offset: [w/2 + 5, 0]
+            offset: [w/2 + 5, -(f.properties.iconH || 32)/2]
           }).openTooltip();
 
           const size = f.properties.labelSize || 14;
