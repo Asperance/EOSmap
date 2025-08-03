@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>EOS Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>html,body,#map{height:100%;margin:0}</style>
+</head>
+<body>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  /* === замените на реальное разрешение PNG === */
+  const IMAGE_WIDTH  = 2874;   // пример: 5000
+  const IMAGE_HEIGHT = 6250;  // пример: 3500
+  const bounds = [[0,0], [IMAGE_HEIGHT, IMAGE_WIDTH]];  // [y,x]
+
+  const map = L.map('map', {
+    crs: L.CRS.Simple,
+    minZoom: -5,  // можно колесиком «приближать» сверх 1:1
+    maxZoom: 2,
+    zoomSnap: 0.5
+  });
+  L.imageOverlay('img/map.png', bounds).addTo(map);
+  map.fitBounds(bounds);
+  map.setMaxBounds(bounds);
+</script>
+</body>
+</html>
