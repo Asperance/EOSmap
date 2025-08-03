@@ -13,7 +13,6 @@
  .icon-box{background:#222;padding:4px;max-height:160px;overflow-y:auto}
  .icon-box img{width:24px;height:24px;margin:2px;cursor:pointer}
  .icon-box img.sel{outline:2px solid #0f0}
-
 </style>
 
 <style>
@@ -46,7 +45,7 @@ function init(img,iconList){
   const OVERPAN=500;
   map.setMaxBounds([[-OVERPAN,-OVERPAN],[img.naturalHeight+OVERPAN,img.naturalWidth+OVERPAN]]);
 
-  map.pm.addControls({position:'topleft', drawMarker:true, drawCircle:true, drawPolygon:true, editMode:true, dragMode:true, removalMode:true});
+  map.pm.addControls({position:'topleft',drawMarker:true,drawCircle:true,drawPolygon:true,editMode:true,dragMode:true,removalMode:true});
 
   if(iconList.length){
     const Palette=L.Control.extend({options:{position:'topright'},onAdd(){
@@ -81,7 +80,7 @@ function init(img,iconList){
     m.bindTooltip(txt,{permanent:true,direction:'right',className:'label-no-bg',offset:[5,0]}).openTooltip();
     styleTip(m.getTooltip(),size,col,map.getZoom());
     save(m,{label:txt,labelSize:size,labelColor:col,iconW:1,iconH:1});
-    markers.push({layer:m,baseW:1,baseH:1,baseZoom:baseZoom});
+    markers.push({layer:m,baseW:1,baseH:1,baseZoom:map.getZoom()});
     textMode=false;
   });
 
@@ -105,7 +104,7 @@ function init(img,iconList){
       let w=+prompt('Ширина иконки (px):',curIcon.w)||curIcon.w,
           h=+prompt('Высота иконки (px):',curIcon.h)||curIcon.h;
       l.setIcon(L.icon({iconUrl:curIcon.url,iconSize:[w,h],iconAnchor:[w/2,h]}));
-      markers.push({layer:l,baseW:w,baseH:h,baseZoom:baseZoom});
+      markers.push({layer:l,baseW:w,baseH:h,baseZoom:map.getZoom()});
       const txt=prompt('Текст подписи (Enter = без):','');
       if(txt){
         const s=prompt('Размер текста (px):','14')||'14';
@@ -151,14 +150,14 @@ L.geoJSON(gj,{
     if (f.properties && f.properties.icon) {
       const s = [f.properties.iconW || 32, f.properties.iconH || 32];
       const mk = L.marker(latlng, { icon: L.icon({ iconUrl: f.properties.icon, iconSize: s, iconAnchor: [s[0]/2, s[1]] }) });
-      if (typeof markers !== 'undefined') { markers.push({ layer: mk, baseW: s[0], baseH: s[1], baseZoom:baseZoom }); }
+      if (typeof markers !== 'undefined') { markers.push({ layer: mk, baseW: s[0], baseH: s[1], baseZoom: map.getZoom() }); }
       return mk;
     }
 
     // Text-only labels -> transparent 1x1 marker to avoid default pin
     if (f.properties && f.properties.label) {
       const mk = L.marker(latlng, { icon: L.icon({ iconUrl: '', iconSize: [1,1] }) });
-      if (typeof markers !== 'undefined') { markers.push({ layer: mk, baseW: 1, baseH: 1, baseZoom:baseZoom }); }
+      if (typeof markers !== 'undefined') { markers.push({ layer: mk, baseW: 1, baseH: 1, baseZoom: map.getZoom() }); }
       return mk;
     }
 
@@ -197,7 +196,7 @@ L.geoJSON(gj,{
           tip._container.style.color = col;
           tip._container.style.textShadow = '0 0 2px rgba(0,0,0,.5)';
           if (typeof labels !== 'undefined') {
-            labels.push({ el: tip._container, baseSize: parseInt(size)||14, baseZoom:baseZoom });
+            labels.push({ el: tip._container, baseSize: parseInt(size)||14, baseZoom: map.getZoom() });
           }
         }
       };
@@ -230,7 +229,7 @@ L.geoJSON(gj,{
     const px=parseInt(size)||14;
     el.style.fontSize=px+'px';el.style.color=col;
     el.style.webkitTextStroke=STROKE_PX+'px #fff';
-    labels.push({el,baseSize:px,baseZoom:baseZoom});
+    labels.push({el,baseSize:px,baseZoom:z});
   }
   function save(l,p){l.feature=l.feature||{type:'Feature',properties:{}};Object.assign(l.feature.properties,p);}
 }
