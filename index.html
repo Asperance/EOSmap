@@ -27,5 +27,28 @@
   map.fitBounds(bounds);
   map.setMaxBounds(bounds);
 </script>
+<link rel="stylesheet"
+      href="https://unpkg.com/leaflet-geoman@2.16.0/dist/leaflet-geoman.css">
+<script src="https://unpkg.com/leaflet-geoman@2.16.0/dist/leaflet-geoman.min.js"></script>
+<script>
+  // Включаем панель рисования
+  map.pm.addControls({
+    position: 'topleft',
+    drawMarker: true,
+    drawCircle: true,
+    drawPolygon: true,
+    editMode: true,
+    dragMode: true,
+    removalMode: true
+  });
+
+  // Каждое изменение — выводим актуальный GeoJSON в консоль
+  function dump() {
+    const gj = L.PM.Utils.findLayers(map)      // все нарисованные слои
+                 .toGeoJSON();                 // → FeatureCollection
+    console.log(JSON.stringify(gj, null, 2));
+  }
+  map.on('pm:create pm:remove pm:edit', dump);
+</script>
 </body>
 </html>
