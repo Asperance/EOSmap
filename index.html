@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>EOS Map — режим редактирования</title>
+  <title>EOS Map — режим редактирования</title>
 
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- Leaflet-Geoman -->
+  <!-- Leaflet‑Geoman -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.15.0/dist/leaflet-geoman.css" />
 
   <style>
@@ -68,7 +68,7 @@ window.addEventListener('load',()=>{
         const h=prompt('Высота иконки (px, Enter = оригинал):','');
         if(w&&h){size=[+w||size[0],+h||size[1]];}
         l.setIcon(L.icon({iconUrl:selUrl,iconSize:size,iconAnchor:[size[0]/2,size[1]]}));
-        const txt=prompt('Текст подписи (Enter — без подписи):','');
+        const txt=prompt('Текст подписи (Enter — без подписи):','');
         let col='#fff',fsize='14',stroke='2';
         if(txt){col=await pickColor('#ffffff');fsize=prompt('Размер текста (px):','14')||'14';stroke=prompt('Толщина обводки (px, 0=без):','2')||'0';l.bindTooltip(txt,{permanent:true,direction:'center',className:'label-no-bg',offset:[0,size[1]/2]}).openTooltip();styleTip(l.getTooltip(),col,fsize,stroke);}  
         save(l,{icon:selUrl,iconW:size[0],iconH:size[1],label:txt,labelColor:col,labelSize:fsize,labelStroke:stroke});
@@ -82,7 +82,27 @@ window.addEventListener('load',()=>{
     L.control({position:'topleft'}).onAdd=()=>{const d=L.DomUtil.create('div','leaflet-bar leaflet-control');d.innerHTML='<a href="#" title="Скачать features.json">💾</a>';d.style.cursor='pointer';d.onclick=e=>{e.preventDefault();download(L.featureGroup(L.PM.Utils.findLayers(map)).toGeoJSON());};return d;};
 
     /* --- Вспомогательные функции --- */
-    function styleTip(tt,c,s,st){const el=tt&&tt.getElement?tt.getElement():null;if(!el)return;if(c)el.style.color=c;if(s)el.style.fontSize=s+'px';el.style.webkitTextStroke=(st&&+st>0)?`${st}px #fff`:'';el.style.textShadow='0 0 2px #000';}
+        /* === Улучшенное оформление подписи: внешняя белая обводка === */
+    function styleTip(tt, c, s, st) {
+      const el = tt && tt.getElement ? tt.getElement() : null;
+      if (!el) return;
+
+      // основной цвет и размер шрифта
+      if (c) el.style.color = c;
+      if (s) el.style.fontSize = s + 'px';
+
+      // «чистая» внешняя обводка: много‑кратный text‑shadow по углам
+      const w = parseInt(st, 10);
+      if (w && w > 0) {
+        const sh = [
+          `${-w}px ${-w}px 0 #fff`, `${w}px ${-w}px 0 #fff`,
+          `${-w}px ${w}px 0 #fff`,  `${w}px ${w}px 0 #fff`
+        ].join(',');
+        el.style.textShadow = sh;
+      } else {
+        el.style.textShadow = 'none';
+      }
+    }px #fff`:'';el.style.textShadow='0 0 2px #000';}
     function save(l,p){l.feature=l.feature||{type:'Feature',properties:{}};Object.assign(l.feature.properties,p);}    
     function download(obj){const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='features.json';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}  
   }
