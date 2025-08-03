@@ -11,7 +11,10 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.15.0/dist/leaflet-geoman.css" />
 
   <style>
-    html,body,#map{height:100%;margin:0}
+    /* высота на весь экран + тёмный фон */
+    html,body,#map{height:100%;margin:0;background:#111}
+    /* если карта уедет за пределы, будет видно именно этот цвет */
+    .leaflet-container{background:#111}
   </style>
 </head>
 <body>
@@ -41,6 +44,8 @@
 
     L.imageOverlay(imgSrc, bounds).addTo(map);
     map.fitBounds(bounds);
+    /* --- Ближе к карте при старте (+1 уровень) --- */
+    map.zoomIn(1);  // можно изменить число, чтобы сильнее приблизить
     map.setMaxBounds(bounds);
 
     // Проверяем доступность Geoman
