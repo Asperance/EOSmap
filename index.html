@@ -57,6 +57,7 @@ function init(img, iconList){
   /* --- карта и подложка --- */
 L.imageOverlay(MAP_IMG, bounds).addTo(map);
 map.fitBounds(bounds);
+map.setZoom(2);
 
 /* позволяем «растаскивать» карту чуть дальше подложки */
 const OVERPAN = 500;                       // запас в пикселях по всем сторонам
