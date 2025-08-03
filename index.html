@@ -4,71 +4,63 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>EOS Map</title>
-  <!-- Leaflet styles -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <!-- Leaflet‑Geoman styles -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-geoman@2.16.0/dist/leaflet-geoman.css">
+
+  <!-- Leaflet -->
+  <link rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <!-- Leaflet-Geoman -->
+  <link rel="stylesheet"
+        href="https://unpkg.com/leaflet-geoman@2.16.0/dist/leaflet-geoman.css">
+
   <style>
-    html, body, #map { height: 100%; margin: 0; }
-    /* подписи на полигонах / кругах */
-    .label {
-      font: 14px/1 sans-serif;
-      color: #fff;
-      text-shadow: 0 0 3px #000;
-      pointer-events: none;
-    }
+    html,body,#map{height:100%;margin:0}
   </style>
 </head>
 <body>
 <div id="map"></div>
 
-<!-- Leaflet core -->
+<!-- libs -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<!-- Leaflet‑Geoman plugin -->
 <script src="https://unpkg.com/leaflet-geoman@2.16.0/dist/leaflet-geoman.min.js"></script>
+
 <script>
-  // Путь до вашей картинки‑карты
+  /* путь к картинке */
   const imgSrc = 'img/map.png';
 
-  // Определяем размеры изображения, чтобы задать границы Leaflet
-  const img = new Image();
-  img.onload = () => {
-    const width  = img.naturalWidth;
-    const height = img.naturalHeight;
-    const bounds = [[0, 0], [height, width]]; // [y,x] пиксели
+  /* реальные размеры вашего PNG! */
+  const IMAGE_WIDTH  = 2874;   // <-- поставьте свою ширину
+  const IMAGE_HEIGHT = 6250;   // <-- и высоту
 
-    // Создаём карту в плоской CRS.Simple
-    const map = L.map('map', {
-      crs: L.CRS.Simple,
-      minZoom: -5,  // можно сильнее приближать
-      maxZoom: 2,
-      zoomSnap: 0.5
-    });
+  const bounds = [[0,0],[IMAGE_HEIGHT,IMAGE_WIDTH]]; // [y,x] CRS.Simple
 
-    // Добавляем подложку‑изображение
-    L.imageOverlay(imgSrc, bounds).addTo(map);
-    map.fitBounds(bounds);
-    map.setMaxBounds(bounds);
+  /* создаём карту */
+  const map = L.map('map', {
+    crs: L.CRS.Simple,
+    minZoom: -5,
+    maxZoom: 2,
+    zoomSnap: 0.5
+  });
 
-    // Подключаем панель рисования Leaflet‑Geoman
-    map.pm.addControls({
-      position: 'topleft',
-      drawMarker: true,
-      drawCircle: true,
-      drawPolygon: true,
-      editMode: true,
-      dragMode: true,
-      removalMode: true
-    });
+  L.imageOverlay(imgSrc, bounds).addTo(map);
+  map.fitBounds(bounds);
+  map.setMaxBounds(bounds);
 
-    // При каждом изменении выводим GeoJSON слоёв в консоль
-    const dump = () => {
-      const gj = L.PM.Utils.findLayers(map).toGeoJSON();
-      console.log('Текущий GeoJSON:', JSON.stringify(gj, null, 2));
-    };
-    map.on('pm:create pm:edit pm:remove', dump);
+  /* включаем панель Geoman */
+  map.pm.addControls({           // можно просто map.pm.addControls()
+    position: 'topleft',         // где показывать
+    drawMarker: true,
+    drawCircle: true,
+    drawPolygon: true,
+    editMode: true,
+    removalMode: true
+  });
+
+  /* выводим GeoJSON всех нарисованных объектов */
+  const dump = () => {
+    const gj = L.PM.Utils.findLayers(map).toGeoJSON();
+    console.log('GeoJSON:', JSON.stringify(gj, null, 2));
   };
-  img.src = imgSrc;
+  map.on('pm:create pm:edit pm:remove', dump);
 </script>
 </body>
 </html>
