@@ -163,36 +163,49 @@ function init(img,iconList){
         // Fallback
         return L.marker(latlng);
       },
-      onEachFeature: (f, l) => {
-        // Style polygons/circles if color provided
-        if (f.properties && l.setStyle && ('color' in f.properties)) {
-          const col = f.properties.color;
-          const op  = ('fillOpacity' in f.properties) ? f.properties.fillOpacity : 0.3;
-          l.setStyle({ color: col, fillColor: col, fillOpacity: op });
+      
+onEachFeature: (f, l) => {
+  // Style polygons/circles if color provided
+  if (f.properties && l.setStyle && ('color' in f.properties)) {
+    const col = f.properties.color;
+    const op  = ('fillOpacity' in f.properties) ? f.properties.fillOpacity : 0.3;
+    l.setStyle({ color: col, fillColor: col, fillOpacity: op });
+  }
+
+  // Bind permanent label to markers
+  if (l instanceof L.Marker && f.properties && f.properties.label) {
+    const w = f.properties.iconW || 1;
+    const h = f.properties.iconH || 32; // default height for vertical centering
+    l.bindTooltip(f.properties.label, {
+      permanent: true,
+      direction: 'right',
+      className: 'label-no-bg',
+      offset: [w/2 + 5, -h/2]
+    }).openTooltip();
+
+    const size = f.properties.labelSize || 14;
+    const col  = f.properties.labelColor || '#ffffff';
+
+    const applyStyle = () => {
+      const tip = l.getTooltip && l.getTooltip();
+      if (!tip) return;
+      if (typeof styleTip === 'function') {
+        styleTip(tip, size, col, map.getZoom());
+      } else if (tip._container) {
+        tip._container.style.fontSize = size + 'px';
+        tip._container.style.color = col;
+        tip._container.style.textShadow = '0 0 2px rgba(0,0,0,.5)';
+        if (typeof labels !== 'undefined') {
+          labels.push({ el: tip._container, baseSize: parseInt(size)||14, baseZoom: map.getZoom() });
         }
+      }
+    };
 
-        // Bind permanent label to markers
-        if (l instanceof L.Marker && f.properties && f.properties.label) {
-          const w = f.properties.iconW || 1;
-          l.bindTooltip(f.properties.label, {
-            permanent: true,
-            direction: 'right',
-            className: 'label-no-bg',
-            offset: [w/2 + 5, -(f.properties.iconH || 32)/2]
-          }).openTooltip();
-
-          const size = f.properties.labelSize || 14;
-          const col  = f.properties.labelColor || '#ffffff';
-
-          const tip = l.getTooltip && l.getTooltip();
-          if (tip && typeof styleTip === 'function') {
-            styleTip(tip, size, col, map.getZoom());
-          } else if (tip && tip._container) {
-            tip._container.style.fontSize = size + 'px';
-            tip._container.style.color = col;
-            tip._container.style.textShadow = '0 0 2px rgba(0,0,0,.5)';
-          }
-        }
+    // Style immediately and also when tooltip is (re)opened
+    applyStyle();
+    l.on('tooltipopen', applyStyle);
+  }
+}}
       }
     }).addTo(map);
   });
