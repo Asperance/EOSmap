@@ -6,11 +6,9 @@
   <title>EOS Map</title>
 
   <!-- Leaflet core -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <!-- Leaflet-Geoman (фикс: рабочая версия 2.15.0) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-geoman@2.15.0/dist/leaflet-geoman.css">
-  <!-- Если вдруг unpkg недоступен, раскомментируйте строку ниже и закомментируйте верхнюю -->
-  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-geoman@2.15.0/dist/leaflet-geoman.css"> -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Leaflet-Geoman: стабильный CDN jsDelivr -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.15.0/dist/leaflet-geoman.css" />
 
   <style>
     html,body,#map{height:100%;margin:0}
@@ -19,54 +17,54 @@
 <body>
 <div id="map"></div>
 
-<!-- libs -->
+<!-- JS libs -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-geoman@2.15.0/dist/leaflet-geoman.min.js"></script>
-<!-- Фоллбэк CDN (если нужно) -->
-<!-- <script src="https://cdn.jsdelivr.net/npm/leaflet-geoman@2.15.0/dist/leaflet-geoman.min.js"></script> -->
+<script src="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.15.0/dist/leaflet-geoman.min.js"></script>
 
 <script>
-  // Путь к картинке карты (оставьте как есть, если файл лежит по этому пути)
+  // Относительный путь к файлу карты
   const imgSrc = 'img/map.png';
 
-  // Задайте фактические размеры PNG
-  const IMAGE_WIDTH = 2874;   // <- замените на ширину вашей карты
-  const IMAGE_HEIGHT = 6250;  // <- замените на высоту вашей карты
+  // Динамически определяем размеры PNG, чтобы не прописывать вручную
+  const img = new Image();
+  img.onload = () => {
+    const WIDTH  = img.naturalWidth;
+    const HEIGHT = img.naturalHeight;
+    const bounds = [[0,0],[HEIGHT,WIDTH]];  // CRS.Simple [y,x]
 
-  const bounds = [[0,0],[IMAGE_HEIGHT,IMAGE_WIDTH]]; // CRS.Simple
-
-  // Инициализируем карту
-  const map = L.map('map', {
-    crs: L.CRS.Simple,
-    minZoom: -5,
-    maxZoom: 2,
-    zoomSnap: 0.5
-  });
-
-  L.imageOverlay(imgSrc, bounds).addTo(map);
-  map.fitBounds(bounds);
-  map.setMaxBounds(bounds);
-
-  // Включаем панель Geoman
-  if (map.pm) {
-    map.pm.addControls({
-      position: 'topleft',
-      drawMarker: true,
-      drawCircle: true,
-      drawPolygon: true,
-      editMode: true,
-      removalMode: true
+    const map = L.map('map', {
+      crs: L.CRS.Simple,
+      minZoom: -5,
+      maxZoom: 2,
+      zoomSnap: 0.5
     });
 
-    // Вывод GeoJSON всех объектов при изменениях
-    const dump = () => {
-      const gj = L.PM.Utils.findLayers(map).toGeoJSON();
-      console.log('GeoJSON:', JSON.stringify(gj, null, 2));
-    };
-    map.on('pm:create pm:edit pm:remove', dump);
-  } else {
-    console.error('Leaflet-Geoman не загрузился. Проверьте ссылки на CDN.');
-  }
+    L.imageOverlay(imgSrc, bounds).addTo(map);
+    map.fitBounds(bounds);
+    map.setMaxBounds(bounds);
+
+    // Проверяем доступность Geoman
+    if (map.pm) {
+      map.pm.addControls({
+        position: 'topleft',
+        drawMarker: true,
+        drawCircle: true,
+        drawPolygon: true,
+        editMode: true,
+        removalMode: true
+      });
+
+      const dump = () => {
+        const gj = L.PM.Utils.findLayers(map).toGeoJSON();
+        console.log('GeoJSON:', JSON.stringify(gj, null, 2));
+      };
+      map.on('pm:create pm:edit pm:remove', dump);
+    } else {
+      console.error('Leaflet-Geoman не загрузился — проверьте ссылки на CDN.');
+    }
+  };
+  img.onerror = () => console.error('Не удалось загрузить картинку карты по пути', imgSrc);
+  img.src = imgSrc;
 </script>
 </body>
 </html>
