@@ -19,156 +19,79 @@
 <body>
 <div id="map"></div>
 
-<!-- JS libs -->
+<!-- libs -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.15.0/dist/leaflet-geoman.min.js" defer></script>
 <script defer>
-window.addEventListener('load', () => {
+window.addEventListener('load',()=>{
   const imgSrc = 'img/map.png';
-  const iconManifest = 'img/icons.json';   // список файлов-иконок
+  const iconManifest = 'img/icons.json';
 
-  /* === Заранее подгружаем список доступных иконок === */
-  let iconList = [];
-  fetch(iconManifest)
-    .then(r=>r.ok?r.json():[])
-    .then(arr=>{ iconList = Array.isArray(arr)?arr:[]; })
-    .catch(()=>{});
+  /* Helper: system color‑picker → Promise */
+  const pickColor = (def='#ffffff')=>new Promise(res=>{const i=document.createElement('input');i.type='color';i.value=def;i.style.position='fixed';i.style.left='-100px';document.body.appendChild(i);i.click();i.addEventListener('input',()=>{res(i.value);document.body.removeChild(i);});});
 
-  /* === Подложка-карта === */
-  const img = new Image();
-  img.onload = () => {
-    const W = img.naturalWidth;
-    const H = img.naturalHeight;
-    const bounds = [[0,0],[H,W]];
+  /* Load available icons */
+  let iconList=[];
+  fetch(iconManifest).then(r=>r.ok?r.json():[]).then(arr=>iconList=arr).catch(()=>{});
 
-    const map = L.map('map', { crs:L.CRS.Simple,minZoom:-5,maxZoom:2,zoomSnap:0.5 });
-    L.imageOverlay(imgSrc, bounds).addTo(map);
-    map.fitBounds(bounds);
-    map.zoomIn(1);
-    map.setMaxBounds(bounds);
+  /* Load map image */
+  const img=new Image();img.onload=()=>{
+    const bounds=[[0,0],[img.naturalHeight,img.naturalWidth]];
+    const map=L.map('map',{crs:L.CRS.Simple,minZoom:-5,maxZoom:2,zoomSnap:0.5});
+    L.imageOverlay(imgSrc,bounds).addTo(map);
+    map.fitBounds(bounds);map.zoomIn(1);map.setMaxBounds(bounds);
 
-    /* === Geoman панель === */ /*комментим если переводим карту в режим просмотра*/
+    // === EDIT-MODE TOGGLE ===
     map.pm.addControls({position:'topleft',drawMarker:true,drawCircle:true,drawPolygon:true,editMode:true,dragMode:true,removalMode:true});
 
-    /* === Palette of icons (top‑right) === */
-    let selectedIconUrl = '';
-    const IconPalette = L.Control.extend({
-      onAdd: function(){
-        const div = L.DomUtil.create('div','leaflet-bar leaflet-control');
-        div.style.background = '#222';
-        div.style.padding = '4px';
-        div.style.maxHeight = '160px';
-        div.style.overflowY = 'auto';
-        const build = () => {
-          div.innerHTML='';
-          iconList.forEach(file=>{
-            const img=document.createElement('img');
-            img.src='img/'+file;
-            img.style.width='24px';
-            img.style.height='24px';
-            img.style.margin='2px';
-            img.style.cursor='pointer';
-            img.onclick=()=>{
-              selectedIconUrl = 'img/'+file;
-              [...div.children].forEach(c=>c.style.outline='none');
-              img.style.outline='2px solid #0f0';
-            };
-            div.appendChild(img);
-          });
-        };
-        build();
-        return div;
+    /* ===== Icon palette ===== */
+    let selIconUrl='',selIconNatural=[32,32],selCustomSize=null;
+    map.addControl(L.Control.extend({onAdd(){const d=L.DomUtil.create('div','leaflet-bar leaflet-control');d.style.cssText='background:#222;padding:4px;max-height:160px;overflow-y:auto';iconList.forEach(f=>{const im=new Image();im.src='img/'+f;im.style.cssText='width:24px;height:24px;margin:2px;cursor:pointer;';im.onclick=()=>{selIconUrl='img/'+f;selIconNatural=[im.naturalWidth||32,im.naturalHeight||32];selCustomSize=null;[...d.children].forEach(c=>c.style.outline='none');im.style.outline='2px solid #0f0';};d.appendChild(im);});return d;}}));
+
+    /* ===== Creation events ===== */
+    map.on('pm:create',async e=>{
+      const l=e.layer;
+      /* ZONES */
+      if(l instanceof L.Circle||l instanceof L.Polygon){
+        const col=await pickColor('#ff0000');
+        l.setStyle({color:col,fillColor:col,fillOpacity:0.3});
+        l.feature=l.feature||{type:'Feature',properties:{}};l.feature.properties.color=col;
       }
-    });
-    map.addControl(new IconPalette({position:'topright'}));
-
-    /* === Создание слоёв === */
-    map.on('pm:create', e => {
-      const layer = e.layer;
-
-      // ---- Зоны ----
-      if(layer instanceof L.Circle || layer instanceof L.Polygon){
-        const color = prompt('Цвет зоны (HEX):', '#ff0000');
-        if(color) layer.setStyle({color, fillColor:color, fillOpacity:0.3});
-        layer.feature = layer.feature || {type:'Feature', properties:{}};
-        layer.feature.properties.color = color;
-      }
-
-      // ---- Маркеры ----
-      if(layer instanceof L.Marker){
-        // применяем выбранную иконку, если есть
-        if(selectedIconUrl){
-          const ic = L.icon({iconUrl:selectedIconUrl, iconSize:[32,32], iconAnchor:[16,32]});
-          layer.setIcon(ic);
+      /* MARKERS */
+      if(l instanceof L.Marker){
+        if(selIconUrl){
+          // Ask for custom size (blank = natural)
+          const w=prompt('Ширина иконки (px, Enter = оригинал):','');
+          const h=prompt('Высота иконки (px, Enter = оригинал):','');
+          if(w&&h){selCustomSize=[parseInt(w,10)||selIconNatural[0],parseInt(h,10)||selIconNatural[1]];} 
+          const size=selCustomSize||selIconNatural;
+          l.setIcon(L.icon({iconUrl:selIconUrl,iconSize:size,iconAnchor:[size[0]/2,size[1]]}));
         }
-        const label = prompt('Текст метки (Enter — без подписи):', '');
-        let txtColor = '#ffffff', txtSize='14';
+        const label=prompt('Текст метки (Enter — без подписи):','');
+        let txtColor='#ffffff',txtSize='14',strokeW='2';
         if(label){
-          txtColor = prompt('Цвет текста (HEX):', '#ffffff');
-          txtSize  = prompt('Размер текста (px):', '14');
-          layer.bindTooltip(label,{permanent:true,direction:'center',className:'label-no-bg',opacity:1}).openTooltip();
-          const el = layer.getTooltip().getElement();
-          if(el){ el.style.color = txtColor; el.style.fontSize = txtSize+'px'; }
+          txtColor=await pickColor('#ffffff');
+          txtSize =prompt('Размер текста (px):','14')||'14';
+          strokeW =prompt('Толщина обводки (px, 0 = без):','2')||'2';
+          l.bindTooltip(label,{permanent:true,direction:'center',className:'label-no-bg',opacity:1,offset:[0,(selCustomSize?selCustomSize[1]:selIconNatural[1])/2]}).openTooltip();
+          const el=l.getTooltip().getElement();
+          if(el){
+            el.style.color=txtColor;el.style.fontSize=txtSize+'px';
+            if(parseInt(strokeW,10)>0){el.style.webkitTextStroke=`${strokeW}px #fff`;}
+            el.style.textShadow='0 0 2px #000';
+          }
         }
-        layer.feature = layer.feature || {type:'Feature', properties:{}};
-        Object.assign(layer.feature.properties, {
-          icon: selectedIconUrl || undefined,
-          label,
-          labelColor: txtColor,
-          labelSize:  txtSize
-        });
+        l.feature=l.feature||{type:'Feature',properties:{}};
+        Object.assign(l.feature.properties,{icon:selIconUrl||undefined,iconW:(selCustomSize||selIconNatural)[0],iconH:(selCustomSize||selIconNatural)[1],label,labelColor:txtColor,labelSize:txtSize,labelStroke:strokeW});
       }
     });
 
-    /* === Загрузка сохранённых объектов === */
-    fetch('data/features.json').then(r=>r.ok?r.json():null).then(gj=>{
-      if(!gj) return;
-      L.geoJSON(gj, {
-        pointToLayer:(f,latlng)=>{
-          if(f.properties && f.properties.icon){
-            return L.marker(latlng,{icon:L.icon({iconUrl:f.properties.icon,iconSize:[32,32],iconAnchor:[16,32]})});
-          }
-          return L.marker(latlng);
-        },
-        onEachFeature:(f,l)=>{
-          if(f.properties){
-            if(l.setStyle && f.properties.color){
-              l.setStyle({color:f.properties.color,fillColor:f.properties.color,fillOpacity:0.3});
-            }
-            if(l instanceof L.Marker && f.properties.label){
-              l.bindTooltip(f.properties.label,{permanent:true,direction:'center',className:'label-no-bg',opacity:1}).openTooltip();
-              const el=l.getTooltip().getElement();
-              if(el){
-                if(f.properties.labelColor) el.style.color=f.properties.labelColor;
-                if(f.properties.labelSize)  el.style.fontSize=f.properties.labelSize+'px';
-              }
-            }
-          }
-        }
-      }).eachLayer(l=>l.addTo(map));
-    });
+    /* ===== Load saved ===== */
+    fetch('data/features.json').then(r=>r.ok?r.json():null).then(g=>{if(!g)return;L.geoJSON(g,{pointToLayer:(f,latlng)=>{if(f.properties&&f.properties.icon){return L.marker(latlng,{icon:L.icon({iconUrl:f.properties.icon,iconSize:[f.properties.iconW,f.properties.iconH],iconAnchor:[f.properties.iconW/2,f.properties.iconH]})});}return L.marker(latlng);},onEachFeature:(f,l)=>{if(f.properties){if(l.setStyle&&f.properties.color){l.setStyle({color:f.properties.color,fillColor:f.properties.color,fillOpacity:0.3});}if(l instanceof L.Marker&&f.properties.label){l.bindTooltip(f.properties.label,{permanent:true,direction:'center',className:'label-no-bg',opacity:1,offset:[0,(f.properties.iconH||32)/2]}).openTooltip();const el=l.getTooltip().getElement();if(el){if(f.properties.labelColor)el.style.color=f.properties.labelColor;if(f.properties.labelSize)el.style.fontSize=f.properties.labelSize+'px';if(f.properties.labelStroke&&parseInt(f.properties.labelStroke,10)>0){el.style.webkitTextStroke=`${f.properties.labelStroke}px #fff`;}}}}}).addTo(map);});
 
-    /* === Кнопка 💾 сохранить === */
-    const saveCtrl = L.control({position:'topleft'});
-    saveCtrl.onAdd = () => {
-      const div = L.DomUtil.create('div','leaflet-bar leaflet-control');
-      div.innerHTML = '<a href="#" title="Save GeoJSON">💾</a>';
-      div.style.cursor='pointer';
-      div.onclick = e => {
-        e.preventDefault();
-        const collection = L.featureGroup(L.PM.Utils.findLayers(map)).toGeoJSON();
-        const blob = new Blob([JSON.stringify(collection,null,2)], {type:'application/json'});
-        const url=URL.createObjectURL(blob);
-        const a=document.createElement('a');
-        a.href=url;a.download='features.json';a.style.display='none';
-        document.body.appendChild(a);a.click();document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      };
-      return div;
-    };
-    saveCtrl.addTo(map);
+    /* ===== Save ===== */
+    L.control({position:'topleft'}).onAdd=()=>{const d=L.DomUtil.create('div','leaflet-bar leaflet-control');d.innerHTML='<a href="#" title="Save">💾</a>';d.style.cursor='pointer';d.onclick=e=>{e.preventDefault();const coll=L.featureGroup(L.PM.Utils.findLayers(map)).toGeoJSON();const blob=new Blob([JSON.stringify(coll,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='features.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);};return d;};
   };
-  img.onerror=()=>console.error('Не удалось загрузить', imgSrc);
   img.src=imgSrc;
 });
 </script>
