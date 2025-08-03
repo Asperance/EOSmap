@@ -42,19 +42,23 @@ window.addEventListener('load',()=>{
   img.src=MAP_IMG;
 
   async function initOnce(){
-    if(window._leafletMapCreated) return;
-    window._leafletMapCreated=true;
-
+    if(window._eosMapInitialized) return;
     let iconList=[];
     try{
       const res=await fetch(ICONS_JSON);
       if(res.ok) iconList=await res.json();
     }catch(e){console.warn('icons.json load err',e);}
-
-    initMap(img,iconList);
+    initMap(iconList);
+    window._eosMapInitialized=true;
   }
 
-  function initMap(img,iconList){
+  function initMap(iconList){
+    const mapEl=document.getElementById('map');
+    if(mapEl._leaflet_id){                // защита от двойной инициализации
+      console.warn('Карта уже создана');
+      return;
+    }
+
     const bounds=[[0,0],[img.naturalHeight,img.naturalWidth]];
     const map=L.map('map',{crs:L.CRS.Simple,minZoom:-5,maxZoom:2});
     L.imageOverlay(MAP_IMG,bounds).addTo(map);
@@ -114,53 +118,49 @@ window.addEventListener('load',()=>{
     map.on('pm:create',ev=>{
       const layer=ev.layer;
 
-      /* text */
       if(textMode){
         textMode=false;
         const txt=prompt('Текст подписи:','');
         if(!txt){map.removeLayer(layer);return;}
         const txtSize=prompt('Размер текста (px):','14')||'14';
         let txtColor=prompt('HEX цвет','#ffffff')||'#ffffff';
-        txtColor=normalizeHex(txtColor,'#ffffff');
+        txtColor=hex(txtColor,'#ffffff');
         layer.setIcon(L.divIcon({html:'',className:'label-anchor',iconSize:[0,0]}));
         layer.bindTooltip(txt,{permanent:true,direction:'center',className:'label-no-bg'}).openTooltip();
         styleTooltip(layer.getTooltip(),txtSize,txtColor,map.getZoom());
-        saveProps(layer,{label:txt,labelSize:txtSize,labelColor:txtColor});
+        prop(layer,{label:txt,labelSize:txtSize,labelColor:txtColor});
         return;
       }
 
-      /* zones */
       if(layer instanceof L.Circle || layer instanceof L.Polygon){
         let col=prompt('HEX цвет зоны','#ff0000')||'#ff0000';
-        col=normalizeHex(col,'#ff0000');
+        col=hex(col,'#ff0000');
         layer.setStyle({color:col,fillColor:col,fillOpacity:0.3});
         const extra=layer instanceof L.Circle?{radius:layer.getRadius()}:{};
-        saveProps(layer,{color:col,...extra});
+        prop(layer,{color:col,...extra});
         return;
       }
 
-      /* marker icon */
       if(layer instanceof L.Marker){
         let w=+prompt('Ширина иконки',curIcon.w)||curIcon.w;
         let h=+prompt('Высота иконки',curIcon.h)||curIcon.h;
         layer.setIcon(L.icon({iconUrl:curIcon.url,iconSize:[w,h],iconAnchor:[w/2,h]}));
         markers.push({layer,baseW:w,baseH:h,baseZoom:map.getZoom()});
 
-        const txt=prompt('Текст подписи(Enter=нет)','');
+        const txt=prompt('Текст подписи (Enter=нет)','');
         if(txt){
           const txtSize=prompt('Размер текста','14')||'14';
           let txtColor=prompt('HEX цвет текста','#ffffff')||'#ffffff';
-          txtColor=normalizeHex(txtColor,'#ffffff');
+          txtColor=hex(txtColor,'#ffffff');
           layer.bindTooltip(txt,{permanent:true,direction:'center',className:'label-no-bg',offset:[0,h/2]}).openTooltip();
           styleTooltip(layer.getTooltip(),txtSize,txtColor,map.getZoom());
-          saveProps(layer,{icon:curIcon.url,iconW:w,iconH:h,label:txt,labelSize:txtSize,labelColor:txtColor});
+          prop(layer,{icon:curIcon.url,iconW:w,iconH:h,label:txt,labelSize:txtSize,labelColor:txtColor});
         }else{
-          saveProps(layer,{icon:curIcon.url,iconW:w,iconH:h});
+          prop(layer,{icon:curIcon.url,iconW:w,iconH:h});
         }
       }
     });
 
-    /* cleanup on remove */
     map.on('pm:remove',({layer})=>{
       if(layer instanceof L.Marker){
         const i=markers.findIndex(m=>m.layer===layer);
@@ -174,7 +174,6 @@ window.addEventListener('load',()=>{
       }
     });
 
-    /* scale icons & text */
     map.on('zoomend',()=>{
       const z=map.getZoom();
       labels.forEach(o=>{
@@ -191,41 +190,7 @@ window.addEventListener('load',()=>{
       });
     });
 
-    /* import geojson */
-    if(window.fetch){
-      fetch('data/features.json').then(r=>r.ok?r.json():null).then(data=>{
-        if(!data) return;
-        L.geoJSON(data,{
-          pointToLayer:(f,latlng)=>{
-            if(f.properties){
-              if(f.properties.radius){
-                return L.circle(latlng,{radius:f.properties.radius,color:f.properties.color||'#f00',fillColor:f.properties.color||'#f00',fillOpacity:0.3});
-              }
-              if(f.properties.icon){
-                const s=[f.properties.iconW||32,f.properties.iconH||32];
-                const mk=L.marker(latlng,{icon:L.icon({iconUrl:f.properties.icon,iconSize:s,iconAnchor:[s[0]/2,s[1]]})});
-                markers.push({layer:mk,baseW:s[0],baseH:s[1],baseZoom:map.getZoom()});
-                return mk;
-              }
-            }
-            return L.marker(latlng,{icon:L.divIcon({html:'',className:'label-anchor',iconSize:[0,0]})});
-          },
-          onEachFeature:(f,l)=>{
-            if(f.properties && f.properties.color && l.setStyle){
-              l.setStyle({color:f.properties.color,fillColor:f.properties.color,fillOpacity:0.3});
-            }
-            if(l instanceof L.Marker && f.properties && f.properties.label){
-              const h=f.properties.iconH||32;
-              const offset=f.properties.icon?[0,h/2]:[0,0];
-              l.bindTooltip(f.properties.label,{permanent:true,direction:'center',className:'label-no-bg',offset}).openTooltip();
-              styleTooltip(l.getTooltip(),f.properties.labelSize,f.properties.labelColor,map.getZoom());
-            }
-          }
-        }).addTo(map);
-      });
-    }
-
-    /* save button */
+    /* save btn */
     const Save=L.Control.extend({
       options:{position:'topleft'},
       onAdd(){
@@ -237,8 +202,7 @@ window.addEventListener('load',()=>{
           const geo=L.featureGroup(L.PM.Utils.findLayers(map)).toGeoJSON();
           const blob=new Blob([JSON.stringify(geo,null,2)],{type:'application/json'});
           const url=URL.createObjectURL(blob);
-          const a=document.createElement('a');
-          a.href=url;a.download='features.json';a.click();
+          const a=document.createElement('a');a.href=url;a.download='features.json';a.click();
           URL.revokeObjectURL(url);
         };
         return d;
@@ -248,15 +212,13 @@ window.addEventListener('load',()=>{
 
     /* helpers */
     function styleTooltip(tt,size,col,zoom){
-      const el=tt&&tt.getElement?tt.getElement():null;if(!el) return;
+      const el=tt&&tt.getElement?tt.getElement():null;if(!el)return;
       const px=parseInt(size)||14;
-      el.style.fontSize=px+'px';
-      el.style.color=col;
-      el.style.webkitTextStroke=STROKE_PX+'px #fff';
+      el.style.fontSize=px+'px';el.style.color=col;el.style.webkitTextStroke=STROKE_PX+'px #fff';
       labels.push({el,baseSize:px,baseZoom:zoom});
     }
-    function saveProps(layer,p){layer.feature=layer.feature||{type:'Feature',properties:{}};Object.assign(layer.feature.properties,p);}
-    function normalizeHex(inp,def){if(inp[0]!=='#') inp='#'+inp;return/^#?[0-9a-fA-F]{6}$/.test(inp)?inp:def;}
+    function prop(layer,p){layer.feature=layer.feature||{type:'Feature',properties:{}};Object.assign(layer.feature.properties,p);}
+    function hex(v,def){if(v[0]!=='#')v='#'+v;return/^#?[0-9a-fA-F]{6}$/.test(v)?v:def;}
   }
 });
 </script>
