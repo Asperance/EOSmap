@@ -46,7 +46,7 @@ function init(img,iconList){
   const OVERPAN=500;
   map.setMaxBounds([[-OVERPAN,-OVERPAN],[img.naturalHeight+OVERPAN,img.naturalWidth+OVERPAN]]);
 
-  map.pm.addControls({position:'topleft',drawMarker:true,drawCircle:true,drawPolygon:true,editMode:true,dragMode:true,removalMode:true});
+  map.pm.addControls({position:'topleft', drawMarker:true, drawCircle:true, drawPolygon:true, editMode:true, dragMode:true, removalMode:true});
 
   if(iconList.length){
     const Palette=L.Control.extend({options:{position:'topright'},onAdd(){
@@ -134,7 +134,6 @@ function init(img,iconList){
       if(tt){tt.options.offset=[nw/2+5,-nh/2];tt._updatePosition();}
     });
   });
-});
 
   fetch('data/features.json').then(r=>r.ok?r.json():null).then(gj=>{
     if(!gj) return;
