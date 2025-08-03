@@ -54,9 +54,17 @@ function init(img, iconList){
   const bounds=[[0,0],[img.naturalHeight,img.naturalWidth]];
   const map=L.map('map',{crs:L.CRS.Simple,minZoom:-5,maxZoom:2});
   baseZoom = map.getZoom();
-  L.imageOverlay(MAP_IMG,bounds).addTo(map);
-  map.fitBounds(bounds);
-  map.setMaxBounds(bounds);
+  /* --- карта и подложка --- */
+L.imageOverlay(MAP_IMG, bounds).addTo(map);
+map.fitBounds(bounds);
+
+/* позволяем «растаскивать» карту чуть дальше подложки */
+const OVERPAN = 500;                       // запас в пикселях по всем сторонам
+const freeBounds = [
+  [-OVERPAN, -OVERPAN],
+  [img.naturalHeight + OVERPAN, img.naturalWidth + OVERPAN]
+];
+map.setMaxBounds(freeBounds);
 
   /* панель редактирования  (закомментируйте для просмотра) */
   map.pm.addControls({
