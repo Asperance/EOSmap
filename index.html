@@ -69,7 +69,7 @@
       })
       .catch(()=>{});
 
-    /* === Кнопка «💾» — сохранить GeoJSON === */
+        /* === Кнопка «💾» — сохранить GeoJSON === */
     const saveCtrl = L.control({position:'topleft'});
     saveCtrl.onAdd = () => {
       const div = L.DomUtil.create('div','leaflet-bar leaflet-control');
@@ -77,13 +77,25 @@
       div.style.cursor = 'pointer';
       div.onclick = e => {
         e.preventDefault();
-        const gj = L.PM.Utils.findLayers(map).toGeoJSON();
-        const blob = new Blob([JSON.stringify(gj, null, 2)], {type:'application/json'});
+        /* собираем ВСЕ слои, созданные через Geoman */
+        const layers = map.pm.getGeomanLayers(); // массив слоёв
+        const feats = [];
+        layers.forEach(l => {
+          const gj = l.toGeoJSON();
+          if (gj.type === 'FeatureCollection') feats.push(...gj.features);
+          else feats.push(gj);
+        });
+        const collection = { type:'FeatureCollection', features: feats };
+        /* формируем и скачиваем файл */
+        const blob = new Blob([JSON.stringify(collection, null, 2)], {type:'application/json'});
         const url  = URL.createObjectURL(blob);
         const a    = document.createElement('a');
         a.href = url;
         a.download = 'features.json';
+        a.style.display='none';
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
         URL.revokeObjectURL(url);
       };
       return div;
