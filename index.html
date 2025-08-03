@@ -4,51 +4,71 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>EOS Map</title>
+  <!-- Leaflet styles -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <style>html,body,#map{height:100%;margin:0}</style>
+  <!-- Leaflet‑Geoman styles -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-geoman@2.16.0/dist/leaflet-geoman.css">
+  <style>
+    html, body, #map { height: 100%; margin: 0; }
+    /* подписи на полигонах / кругах */
+    .label {
+      font: 14px/1 sans-serif;
+      color: #fff;
+      text-shadow: 0 0 3px #000;
+      pointer-events: none;
+    }
+  </style>
 </head>
 <body>
 <div id="map"></div>
 
+<!-- Leaflet core -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-  /* === замените на реальное разрешение PNG === */
-  const IMAGE_WIDTH  = 2874;   // пример: 5000
-  const IMAGE_HEIGHT = 6250;  // пример: 3500
-  const bounds = [[0,0], [IMAGE_HEIGHT, IMAGE_WIDTH]];  // [y,x]
-
-  const map = L.map('map', {
-    crs: L.CRS.Simple,
-    minZoom: -5,  // можно колесиком «приближать» сверх 1:1
-    maxZoom: 2,
-    zoomSnap: 0.5
-  });
-  L.imageOverlay('img/map.png', bounds).addTo(map);
-  map.fitBounds(bounds);
-  map.setMaxBounds(bounds);
-</script>
-<link rel="stylesheet"
-      href="https://unpkg.com/leaflet-geoman@2.16.0/dist/leaflet-geoman.css">
+<!-- Leaflet‑Geoman plugin -->
 <script src="https://unpkg.com/leaflet-geoman@2.16.0/dist/leaflet-geoman.min.js"></script>
 <script>
-  // Включаем панель рисования
-  map.pm.addControls({
-    position: 'topleft',
-    drawMarker: true,
-    drawCircle: true,
-    drawPolygon: true,
-    editMode: true,
-    dragMode: true,
-    removalMode: true
-  });
+  // Путь до вашей картинки‑карты
+  const imgSrc = 'img/map.png';
 
-  // Каждое изменение — выводим актуальный GeoJSON в консоль
-  function dump() {
-    const gj = L.PM.Utils.findLayers(map)      // все нарисованные слои
-                 .toGeoJSON();                 // → FeatureCollection
-    console.log(JSON.stringify(gj, null, 2));
-  }
-  map.on('pm:create pm:remove pm:edit', dump);
+  // Определяем размеры изображения, чтобы задать границы Leaflet
+  const img = new Image();
+  img.onload = () => {
+    const width  = img.naturalWidth;
+    const height = img.naturalHeight;
+    const bounds = [[0, 0], [height, width]]; // [y,x] пиксели
+
+    // Создаём карту в плоской CRS.Simple
+    const map = L.map('map', {
+      crs: L.CRS.Simple,
+      minZoom: -5,  // можно сильнее приближать
+      maxZoom: 2,
+      zoomSnap: 0.5
+    });
+
+    // Добавляем подложку‑изображение
+    L.imageOverlay(imgSrc, bounds).addTo(map);
+    map.fitBounds(bounds);
+    map.setMaxBounds(bounds);
+
+    // Подключаем панель рисования Leaflet‑Geoman
+    map.pm.addControls({
+      position: 'topleft',
+      drawMarker: true,
+      drawCircle: true,
+      drawPolygon: true,
+      editMode: true,
+      dragMode: true,
+      removalMode: true
+    });
+
+    // При каждом изменении выводим GeoJSON слоёв в консоль
+    const dump = () => {
+      const gj = L.PM.Utils.findLayers(map).toGeoJSON();
+      console.log('Текущий GeoJSON:', JSON.stringify(gj, null, 2));
+    };
+    map.on('pm:create pm:edit pm:remove', dump);
+  };
+  img.src = imgSrc;
 </script>
 </body>
 </html>
