@@ -77,8 +77,12 @@
       div.style.cursor = 'pointer';
       div.onclick = e => {
         e.preventDefault();
-        // Получаем FeatureCollection напрямую
-        const collection = L.PM.Utils.findLayers(map).toGeoJSON();
+                // Собираем все слои, созданные Geoman, в FeatureGroup
+        const layers = L.PM.Utils.findLayers(map); // массив Leaflet‑слоёв
+        const fg = L.featureGroup(layers);
+        const collection = fg.toGeoJSON();
+
+        // Скачиваем файл features.json
         const blob = new Blob([JSON.stringify(collection, null, 2)], {type:'application/json'});
         const url  = URL.createObjectURL(blob);
         const a    = document.createElement('a');
@@ -88,7 +92,7 @@
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        URL.revokeObjectURL(url);(url);
       };
       return div;
     };
