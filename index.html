@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>EOS Map (edit mode)</title>
-
-  <!-- Leaflet core -->
+  <title>EOS Map (режим редактирования)</title>
+  
+  <!-- Библиотека Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- Leaflet-Geoman -->
+  <!-- Плагин Leaflet‑Geoman -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.15.0/dist/leaflet-geoman.css" />
 
   <style>
@@ -19,81 +19,134 @@
 <body>
 <div id="map"></div>
 
-<!-- libs -->
+<!-- Скрипты -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.15.0/dist/leaflet-geoman.min.js" defer></script>
 <script defer>
-window.addEventListener('load',()=>{
-  const imgSrc = 'img/map.png';
-  const iconManifest = 'img/icons.json';
+window.addEventListener('load', () => {
+  const MAP_IMG = 'img/map.png';              // файл подложки карты
+  const ICON_MANIFEST = 'img/icons.json';     // JSON‑список доступных иконок
 
-  /* Helper: system color‑picker → Promise */
-  const pickColor = (def='#ffffff')=>new Promise(res=>{const i=document.createElement('input');i.type='color';i.value=def;i.style.position='fixed';i.style.left='-100px';document.body.appendChild(i);i.click();i.addEventListener('input',()=>{res(i.value);document.body.removeChild(i);});});
+  /* === Цветовая пипетка (возвращает Promise<HEX>) === */
+  const pickColor = (def = '#ffffff') => new Promise(res => {
+    const input = Object.assign(document.createElement('input'), { type:'color', value:def, style:'position:fixed;left:-999px' });
+    document.body.appendChild(input);
+    input.addEventListener('input', () => { res(input.value); document.body.removeChild(input); });
+    input.click();
+  });
 
-  /* Load available icons */
-  let iconList=[];
-  fetch(iconManifest).then(r=>r.ok?r.json():[]).then(arr=>iconList=arr).catch(()=>{});
+  /* === Загружаем список иконок === */
+  let iconList = [];
+  fetch(ICON_MANIFEST).then(r=>r.ok?r.json():[]).then(arr=> iconList = arr).catch(()=>{});
 
-  /* Load map image */
-  const img=new Image();img.onload=()=>{
-    const bounds=[[0,0],[img.naturalHeight,img.naturalWidth]];
-    const map=L.map('map',{crs:L.CRS.Simple,minZoom:-5,maxZoom:2,zoomSnap:0.5});
-    L.imageOverlay(imgSrc,bounds).addTo(map);
-    map.fitBounds(bounds);map.zoomIn(1);map.setMaxBounds(bounds);
+  /* === Загружаем картинку‑подложку и создаём карту === */
+  const img = new Image();
+  img.onload = () => {
+    const bounds = [[0,0],[img.naturalHeight,img.naturalWidth]];
+    const map = L.map('map', { crs:L.CRS.Simple, minZoom:-5, maxZoom:2, zoomSnap:0.5 });
+    L.imageOverlay(MAP_IMG, bounds).addTo(map);
+    map.fitBounds(bounds); map.zoomIn(1); map.setMaxBounds(bounds);
 
-    // === EDIT-MODE TOGGLE ===
-    map.pm.addControls({position:'topleft',drawMarker:true,drawCircle:true,drawPolygon:true,editMode:true,dragMode:true,removalMode:true});
+    // === ПАНЕЛЬ РЕДАКТИРОВАНИЯ === (закомментируйте строку ниже для режима ТОЛЬКО ПРОСМОТР)
+    map.pm.addControls({ position:'topleft', drawMarker:true, drawCircle:true, drawPolygon:true, editMode:true, dragMode:true, removalMode:true });
 
-    /* ===== Icon palette ===== */
-    let selIconUrl='',selIconNatural=[32,32],selCustomSize=null;
-    map.addControl(L.Control.extend({onAdd(){const d=L.DomUtil.create('div','leaflet-bar leaflet-control');d.style.cssText='background:#222;padding:4px;max-height:160px;overflow-y:auto';iconList.forEach(f=>{const im=new Image();im.src='img/'+f;im.style.cssText='width:24px;height:24px;margin:2px;cursor:pointer;';im.onclick=()=>{selIconUrl='img/'+f;selIconNatural=[im.naturalWidth||32,im.naturalHeight||32];selCustomSize=null;[...d.children].forEach(c=>c.style.outline='none');im.style.outline='2px solid #0f0';};d.appendChild(im);});return d;}}));
-
-    /* ===== Creation events ===== */
-    map.on('pm:create',async e=>{
-      const l=e.layer;
-      /* ZONES */
-      if(l instanceof L.Circle||l instanceof L.Polygon){
-        const col=await pickColor('#ff0000');
-        l.setStyle({color:col,fillColor:col,fillOpacity:0.3});
-        l.feature=l.feature||{type:'Feature',properties:{}};l.feature.properties.color=col;
+    /* ---------- Палитра иконок (справа‑вверху) ---------- */
+    let currentIconUrl = '', currentNatural = [32,32];
+    const IconPalette = L.Control.extend({
+      options:{ position:'topright' },
+      onAdd(){
+        const div = L.DomUtil.create('div','leaflet-bar leaflet-control');
+        div.style.cssText = 'background:#222;padding:4px;max-height:160px;overflow-y:auto';
+        iconList.forEach(file => {
+          const imgEl = new Image(); imgEl.src = 'img/'+file;
+          imgEl.onload = () => { if(currentIconUrl === '') highlight(imgEl); };
+          imgEl.style.cssText = 'width:24px;height:24px;margin:2px;cursor:pointer;';
+          imgEl.onclick = () => highlight(imgEl);
+          div.appendChild(imgEl);
+        });
+        function highlight(imgEl){
+          currentIconUrl = imgEl.src;
+          currentNatural = [imgEl.naturalWidth||32, imgEl.naturalHeight||32];
+          [...div.children].forEach(c=>c.style.outline='none');
+          imgEl.style.outline='2px solid #0f0';
+        }
+        return div;
       }
-      /* MARKERS */
-      if(l instanceof L.Marker){
-        if(selIconUrl){
-          // Ask for custom size (blank = natural)
-          const w=prompt('Ширина иконки (px, Enter = оригинал):','');
-          const h=prompt('Высота иконки (px, Enter = оригинал):','');
-          if(w&&h){selCustomSize=[parseInt(w,10)||selIconNatural[0],parseInt(h,10)||selIconNatural[1]];} 
-          const size=selCustomSize||selIconNatural;
-          l.setIcon(L.icon({iconUrl:selIconUrl,iconSize:size,iconAnchor:[size[0]/2,size[1]]}));
-        }
-        const label=prompt('Текст метки (Enter — без подписи):','');
-        let txtColor='#ffffff',txtSize='14',strokeW='2';
+    });
+    map.addControl(new IconPalette());
+
+    /* ---------- Создание новых объектов ---------- */
+    map.on('pm:create', async e => {
+      const layer = e.layer;
+
+      /* --- ЗОНЫ (круг / полигон) --- */
+      if(layer instanceof L.Circle || layer instanceof L.Polygon){
+        const col = await pickColor('#ff0000');
+        layer.setStyle({ color:col, fillColor:col, fillOpacity:0.3 });
+        saveProps(layer,{color:col});
+        return;
+      }
+
+      /* --- МАРКЕРЫ --- */
+      if(layer instanceof L.Marker){
+        // 1) размер иконки
+        let size = [...currentNatural];
+        const w = prompt('Ширина иконки (px, Enter = оригинал):','');
+        const h = prompt('Высота иконки (px, Enter = оригинал):','');
+        if(w && h){ size = [parseInt(w)||size[0], parseInt(h)||size[1]]; }
+        layer.setIcon(L.icon({ iconUrl: currentIconUrl, iconSize: size, iconAnchor:[size[0]/2,size[1]] }));
+
+        // 2) подпись
+        const label = prompt('Текст подписи (Enter — без подписи):','');
+        let color = '#ffffff', fontSize='14', stroke='2';
         if(label){
-          txtColor=await pickColor('#ffffff');
-          txtSize =prompt('Размер текста (px):','14')||'14';
-          strokeW =prompt('Толщина обводки (px, 0 = без):','2')||'2';
-          l.bindTooltip(label,{permanent:true,direction:'center',className:'label-no-bg',opacity:1,offset:[0,(selCustomSize?selCustomSize[1]:selIconNatural[1])/2]}).openTooltip();
-          const el=l.getTooltip().getElement();
-          if(el){
-            el.style.color=txtColor;el.style.fontSize=txtSize+'px';
-            if(parseInt(strokeW,10)>0){el.style.webkitTextStroke=`${strokeW}px #fff`;}
-            el.style.textShadow='0 0 2px #000';
-          }
+          color    = await pickColor('#ffffff');
+          fontSize = prompt('Размер текста (px):','14')||'14';
+          stroke   = prompt('Толщина белой обводки (px, 0 = без):','2')||'0';
+          layer.bindTooltip(label, { permanent:true, direction:'center', className:'label-no-bg', opacity:1, offset:[0,size[1]/2] }).openTooltip();
+          styleTooltip(layer.getTooltip(), color, fontSize, stroke);
         }
-        l.feature=l.feature||{type:'Feature',properties:{}};
-        Object.assign(l.feature.properties,{icon:selIconUrl||undefined,iconW:(selCustomSize||selIconNatural)[0],iconH:(selCustomSize||selIconNatural)[1],label,labelColor:txtColor,labelSize:txtSize,labelStroke:strokeW});
+        saveProps(layer,{ icon:currentIconUrl, iconW:size[0], iconH:size[1], label, labelColor:color, labelSize:fontSize, labelStroke:stroke });
       }
     });
 
-    /* ===== Load saved ===== */
-    fetch('data/features.json').then(r=>r.ok?r.json():null).then(g=>{if(!g)return;L.geoJSON(g,{pointToLayer:(f,latlng)=>{if(f.properties&&f.properties.icon){return L.marker(latlng,{icon:L.icon({iconUrl:f.properties.icon,iconSize:[f.properties.iconW,f.properties.iconH],iconAnchor:[f.properties.iconW/2,f.properties.iconH]})});}return L.marker(latlng);},onEachFeature:(f,l)=>{if(f.properties){if(l.setStyle&&f.properties.color){l.setStyle({color:f.properties.color,fillColor:f.properties.color,fillOpacity:0.3});}if(l instanceof L.Marker&&f.properties.label){l.bindTooltip(f.properties.label,{permanent:true,direction:'center',className:'label-no-bg',opacity:1,offset:[0,(f.properties.iconH||32)/2]}).openTooltip();const el=l.getTooltip().getElement();if(el){if(f.properties.labelColor)el.style.color=f.properties.labelColor;if(f.properties.labelSize)el.style.fontSize=f.properties.labelSize+'px';if(f.properties.labelStroke&&parseInt(f.properties.labelStroke,10)>0){el.style.webkitTextStroke=`${f.properties.labelStroke}px #fff`;}}}}}).addTo(map);});
+    /* ---------- Загрузка сохранённых объектов ---------- */
+    fetch('data/features.json').then(r=>r.ok?r.json():null).then(json => {
+      if(!json) return;
+      L.geoJSON(json, {
+        pointToLayer:(f,latlng) => {
+          if(f.properties && f.properties.icon){
+            const sz = [f.properties.iconW||32, f.properties.iconH||32];
+            return L.marker(latlng,{ icon:L.icon({iconUrl:f.properties.icon,iconSize:sz,iconAnchor:[sz[0]/2,sz[1]]}) });
+          }
+          return L.marker(latlng);
+        },
+        onEachFeature:(f,l) => {
+          if(f.properties){
+            if(l.setStyle && f.properties.color){ l.setStyle({color:f.properties.color,fillColor:f.properties.color,fillOpacity:0.3}); }
+            if(l instanceof L.Marker && f.properties.label){
+              const szH = f.properties.iconH || 32;
+              l.bindTooltip(f.properties.label,{permanent:true,direction:'center',className:'label-no-bg',opacity:1,offset:[0,szH/2]}).openTooltip();
+              styleTooltip(l.getTooltip(), f.properties.labelColor, f.properties.labelSize, f.properties.labelStroke);
+            }
+          }
+        }
+      }).addTo(map);
+    });
 
-    /* ===== Save ===== */
-    L.control({position:'topleft'}).onAdd=()=>{const d=L.DomUtil.create('div','leaflet-bar leaflet-control');d.innerHTML='<a href="#" title="Save">💾</a>';d.style.cursor='pointer';d.onclick=e=>{e.preventDefault();const coll=L.featureGroup(L.PM.Utils.findLayers(map)).toGeoJSON();const blob=new Blob([JSON.stringify(coll,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='features.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);};return d;};
-  };
-  img.src=imgSrc;
-});
-</script>
-</body>
-</html>
+    /* ---------- Кнопка Сохранить ---------- */
+    L.control({position:'topleft'}).onAdd = () => {
+      const div = L.DomUtil.create('div','leaflet-bar leaflet-control');
+      div.innerHTML = '<a href="#" title="Скачать features.json">💾</a>';
+      div.style.cursor='pointer';
+      div.onclick = e => { e.preventDefault(); downloadJSON(L.featureGroup(L.PM.Utils.findLayers(map)).toGeoJSON()); };
+      return div;
+    };
+
+    /* === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ === */
+    function styleTooltip(tt, color, size, stroke){
+      const el = tt && tt.getElement ? tt.getElement() : null; if(!el) return;
+      if(color) el.style.color = color;
+      if(size)  el.style.fontSize = size+'px';
+      if(stroke && parseInt(stroke)>0){ el.style.webkitTextStroke=`${stroke}px #fff`; } else { el.style.webkitTextStroke=''; }
+      el.style.textShadow='0 0 2px #000';
