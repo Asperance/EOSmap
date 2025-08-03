@@ -55,13 +55,13 @@ function init(img,iconList){
     map.addControl(new Palette());
   }
 
-  const Txt=L.Control.extend({options:{position:'topright'},onAdd(){
+  /*const Txt=L.Control.extend({options:{position:'topright'},onAdd(){
     const d=L.DomUtil.create('div','leaflet-bar leaflet-control');
     d.innerHTML='<a href="#" title="Добавить текст">🖉</a>';
     const paint=()=>d.style.background=textMode?'#666':'#fff';
     d.onclick=e=>{e.preventDefault();textMode=!textMode;paint();};
     paint();return d;}});
-  map.addControl(new Txt());
+  map.addControl(new Txt());*/
 
   map.on('click',e=>{
     if(!textMode) return;
