@@ -126,20 +126,6 @@ function init(img,iconList){
       o.el.style.fontSize=(o.baseSize*k)+'px';
       o.el.style.webkitTextStroke=(STROKE_PX*k)+'px #fff';
     });
-
-  // Keep tooltips aligned to markers during zoom and pan
-  function syncTooltips(){
-    const z = map.getZoom();
-    markers.forEach(m=>{
-      const k = Math.pow(2, z - m.baseZoom), nw = m.baseW * k, nh = m.baseH * k;
-      const tt = m.layer.getTooltip && m.layer.getTooltip();
-      if(tt){ tt.options.offset = [nw/2 + 5, -nh/2]; tt._updatePosition(); }
-    });
-  }
-  map.on('zoom', syncTooltips);
-  map.on('move', syncTooltips);
-
-
     markers.forEach(m=>{
       const k=Math.pow(2,z-m.baseZoom),nw=m.baseW*k,nh=m.baseH*k;
       m.layer.setIcon(L.icon({iconUrl:m.layer.options.icon.options.iconUrl,
