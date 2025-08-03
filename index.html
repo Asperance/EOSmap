@@ -35,6 +35,7 @@ function init(img,iconList){
   baseZoom=map.getZoom();
   L.imageOverlay(MAP_IMG,bounds).addTo(map);
   map.fitBounds(bounds);
+  map.setZoom(-1);
   const OVERPAN=500;
   map.setMaxBounds([[-OVERPAN,-OVERPAN],[img.naturalHeight+OVERPAN,img.naturalWidth+OVERPAN]]);
 
