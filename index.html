@@ -132,66 +132,60 @@ function init(img,iconList){
     if(!gj) return;
     L.geoJSON(gj,{
       pointToLayer: (f, latlng) => {
-  // Circles saved as Point with radius property
-  if (f.properties && typeof f.properties.radius === 'number') {
-    const col = (f.properties.color || '#ff0000');
-    const op  = (typeof f.properties.fillOpacity === 'number') ? f.properties.fillOpacity : 0.3;
-    return L.circle(latlng, { radius: f.properties.radius, color: col, fillColor: col, fillOpacity: op });
-  }
+        // Circles saved as Point with radius property
+        if (f.properties && typeof f.properties.radius === 'number') {
+          const col = (f.properties.color || '#ff0000');
+          const op  = (typeof f.properties.fillOpacity === 'number') ? f.properties.fillOpacity : 0.3;
+          return L.circle(latlng, { radius: f.properties.radius, color: col, fillColor: col, fillOpacity: op });
+        }
 
-  // Markers with custom icon
-  if (f.properties && f.properties.icon) {
-    const s = [f.properties.iconW || 32, f.properties.iconH || 32];
-    const mk = L.marker(latlng, { icon: L.icon({ iconUrl: f.properties.icon, iconSize: s, iconAnchor: [s[0]/2, s[1]] }) });
-    if (typeof markers !== 'undefined') { markers.push({ layer: mk, baseW: s[0], baseH: s[1], baseZoom: map.getZoom() }); }
-    return mk;
-  }
+        // Markers with custom icon
+        if (f.properties && f.properties.icon) {
+          const s = [f.properties.iconW || 32, f.properties.iconH || 32];
+          const mk = L.marker(latlng, { icon: L.icon({ iconUrl: f.properties.icon, iconSize: s, iconAnchor: [s[0]/2, s[1]] }) });
+          if (typeof markers !== 'undefined') { markers.push({ layer: mk, baseW: s[0], baseH: s[1], baseZoom: map.getZoom() }); }
+          return mk;
+        }
 
-  // Text-only labels -> transparent 1x1 marker to avoid default pin
-  if (f.properties && f.properties.label) {
-    const mk = L.marker(latlng, { icon: L.icon({ iconUrl: '', iconSize: [1,1] }) });
-    if (typeof markers !== 'undefined') { markers.push({ layer: mk, baseW: 1, baseH: 1, baseZoom: map.getZoom() }); }
-    return mk;
-  }
+        // Text-only labels -> transparent 1x1 marker to avoid default pin
+        if (f.properties && f.properties.label) {
+          const mk = L.marker(latlng, { icon: L.icon({ iconUrl: '', iconSize: [1,1] }) });
+          if (typeof markers !== 'undefined') { markers.push({ layer: mk, baseW: 1, baseH: 1, baseZoom: map.getZoom() }); }
+          return mk;
+        }
 
-  // Fallback
-  return L.marker(latlng);
-},
+        // Fallback
+        return L.marker(latlng);
+      },
       onEachFeature: (f, l) => {
-  // Style polygons/circles if color provided
-  if (f.properties && l.setStyle && ('color' in f.properties)) {
-    const col = f.properties.color;
-    const op  = ('fillOpacity' in f.properties) ? f.properties.fillOpacity : 0.3;
-    l.setStyle({ color: col, fillColor: col, fillOpacity: op });
-  }
+        // Style polygons/circles if color provided
+        if (f.properties && l.setStyle && ('color' in f.properties)) {
+          const col = f.properties.color;
+          const op  = ('fillOpacity' in f.properties) ? f.properties.fillOpacity : 0.3;
+          l.setStyle({ color: col, fillColor: col, fillOpacity: op });
+        }
 
-  // Bind permanent label to markers
-  if (l instanceof L.Marker && f.properties && f.properties.label) {
-    const w = f.properties.iconW || 1;
-    l.bindTooltip(f.properties.label, {
-      permanent: true,
-      direction: 'right',
-      className: 'label-no-bg',
-      offset: [w/2 + 5, 0]
-    }).openTooltip();
+        // Bind permanent label to markers
+        if (l instanceof L.Marker && f.properties && f.properties.label) {
+          const w = f.properties.iconW || 1;
+          l.bindTooltip(f.properties.label, {
+            permanent: true,
+            direction: 'right',
+            className: 'label-no-bg',
+            offset: [w/2 + 5, 0]
+          }).openTooltip();
 
-    const size = f.properties.labelSize || 14;
-    const col  = f.properties.labelColor || '#ffffff';
+          const size = f.properties.labelSize || 14;
+          const col  = f.properties.labelColor || '#ffffff';
 
-    const tip = l.getTooltip && l.getTooltip();
-    if (tip && typeof styleTip === 'function') {
-      styleTip(tip, size, col, map.getZoom());
-    } else if (tip && tip._container) {
-      tip._container.style.fontSize = size + 'px';
-      tip._container.style.color = col;
-      tip._container.style.textShadow = '0 0 2px rgba(0,0,0,.5)';
-    }
-  }
-}
-        if(l instanceof L.Marker && f.properties && f.properties.label){
-          const w=f.properties.iconW||32;
-          l.bindTooltip(f.properties.label,{permanent:true,direction:'right',className:'label-no-bg',offset:[w/2+5,0]}).openTooltip();
-          styleTip(l.getTooltip(),f.properties.labelSize,f.properties.labelColor,map.getZoom());
+          const tip = l.getTooltip && l.getTooltip();
+          if (tip && typeof styleTip === 'function') {
+            styleTip(tip, size, col, map.getZoom());
+          } else if (tip && tip._container) {
+            tip._container.style.fontSize = size + 'px';
+            tip._container.style.color = col;
+            tip._container.style.textShadow = '0 0 2px rgba(0,0,0,.5)';
+          }
         }
       }
     }).addTo(map);
