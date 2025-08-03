@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>EOS Map</title>
 
-  <!-- Leaflet -->
-  <link rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <!-- Leaflet-Geoman -->
-  <link rel="stylesheet"
-        href="https://unpkg.com/leaflet-geoman@2.16.0/dist/leaflet-geoman.css">
+  <!-- Leaflet core -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <!-- Leaflet-Geoman (фикс: рабочая версия 2.15.0) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-geoman@2.15.0/dist/leaflet-geoman.css">
+  <!-- Если вдруг unpkg недоступен, раскомментируйте строку ниже и закомментируйте верхнюю -->
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-geoman@2.15.0/dist/leaflet-geoman.css"> -->
 
   <style>
     html,body,#map{height:100%;margin:0}
@@ -21,19 +21,21 @@
 
 <!-- libs -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-geoman@2.16.0/dist/leaflet-geoman.min.js"></script>
+<script src="https://unpkg.com/leaflet-geoman@2.15.0/dist/leaflet-geoman.min.js"></script>
+<!-- Фоллбэк CDN (если нужно) -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/leaflet-geoman@2.15.0/dist/leaflet-geoman.min.js"></script> -->
 
 <script>
-  /* путь к картинке */
+  // Путь к картинке карты (оставьте как есть, если файл лежит по этому пути)
   const imgSrc = 'img/map.png';
 
-  /* реальные размеры вашего PNG! */
-  const IMAGE_WIDTH  = 2874;   // <-- поставьте свою ширину
-  const IMAGE_HEIGHT = 6250;   // <-- и высоту
+  // Задайте фактические размеры PNG
+  const IMAGE_WIDTH = 2874;   // <- замените на ширину вашей карты
+  const IMAGE_HEIGHT = 6250;  // <- замените на высоту вашей карты
 
-  const bounds = [[0,0],[IMAGE_HEIGHT,IMAGE_WIDTH]]; // [y,x] CRS.Simple
+  const bounds = [[0,0],[IMAGE_HEIGHT,IMAGE_WIDTH]]; // CRS.Simple
 
-  /* создаём карту */
+  // Инициализируем карту
   const map = L.map('map', {
     crs: L.CRS.Simple,
     minZoom: -5,
@@ -45,22 +47,26 @@
   map.fitBounds(bounds);
   map.setMaxBounds(bounds);
 
-  /* включаем панель Geoman */
-  map.pm.addControls({           // можно просто map.pm.addControls()
-    position: 'topleft',         // где показывать
-    drawMarker: true,
-    drawCircle: true,
-    drawPolygon: true,
-    editMode: true,
-    removalMode: true
-  });
+  // Включаем панель Geoman
+  if (map.pm) {
+    map.pm.addControls({
+      position: 'topleft',
+      drawMarker: true,
+      drawCircle: true,
+      drawPolygon: true,
+      editMode: true,
+      removalMode: true
+    });
 
-  /* выводим GeoJSON всех нарисованных объектов */
-  const dump = () => {
-    const gj = L.PM.Utils.findLayers(map).toGeoJSON();
-    console.log('GeoJSON:', JSON.stringify(gj, null, 2));
-  };
-  map.on('pm:create pm:edit pm:remove', dump);
+    // Вывод GeoJSON всех объектов при изменениях
+    const dump = () => {
+      const gj = L.PM.Utils.findLayers(map).toGeoJSON();
+      console.log('GeoJSON:', JSON.stringify(gj, null, 2));
+    };
+    map.on('pm:create pm:edit pm:remove', dump);
+  } else {
+    console.error('Leaflet-Geoman не загрузился. Проверьте ссылки на CDN.');
+  }
 </script>
 </body>
 </html>
