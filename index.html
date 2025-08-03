@@ -57,21 +57,33 @@ window.addEventListener('load', () => {
 
     /* ------ Палитра иконок ------ */
     let curUrl='',curSize=[32,32];
-    map.addControl(L.Control.extend({
-      options:{position:'topright'},
-      onAdd(){
-        const d=L.DomUtil.create('div','leaflet-bar leaflet-control');
-        d.style.cssText='background:#222;padding:4px;max-height:160px;overflow-y:auto';
-        icons.forEach(f=>{
-          const im=new Image();im.src='img/'+f;im.style.cssText='width:24px;height:24px;margin:2px;cursor:pointer;';
-          im.onload=()=>{if(!curUrl) select(im);} ;
-          im.onclick=()=>select(im);
-          d.appendChild(im);
-        });
-        function select(im){curUrl=im.src;curSize=[im.naturalWidth||32,im.naturalHeight||32];[...d.children].forEach(c=>c.style.outline='none');im.style.outline='2px solid #0f0';}
-        return d;
-      }
-    }));
+    // --- Палитра иконок как отдельный класс ---
+const IconPalette = L.Control.extend({
+  options: { position: 'topright' },
+  onAdd() {
+    const d = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+    d.style.cssText = 'background:#222;padding:4px;max-height:160px;overflow-y:auto';
+
+    icons.forEach(file => {
+      const im = new Image();
+      im.src = 'img/' + file;
+      im.style.cssText = 'width:24px;height:24px;margin:2px;cursor:pointer;';
+      im.onload = () => { if (!curUrl) select(im); };
+      im.onclick = () => select(im);
+      d.appendChild(im);
+    });
+
+    function select(im) {
+      curUrl = im.src;
+      curSize = [im.naturalWidth || 32, im.naturalHeight || 32];
+      [...d.children].forEach(c => c.style.outline = 'none');
+      im.style.outline = '2px solid #0f0';
+    }
+
+    return d;
+  }
+});
+map.addControl(new IconPalette());
 
     /* ------ Создание объектов ------ */
     map.on('pm:create',async ev=>{
