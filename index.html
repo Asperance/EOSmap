@@ -111,7 +111,7 @@ function init(img,iconList){
         let c=prompt('HEX цвет текста (ffffff):','#ffffff')||'#ffffff';
         if(c[0]!=='#') c='#'+c;
         if(!/^#?[0-9a-fA-F]{6}$/.test(c)) c='#ffffff';
-        l.bindTooltip(txt,{permanent:true,direction:'right',className:'label-no-bg',offset: [w/2 + 5, -(f.properties.iconH || 32)/2]}).openTooltip();
+        l.bindTooltip(txt,{permanent:true,direction:'right',className:'label-no-bg',offset:[w/2+5,-h/2]}).openTooltip();
         styleTip(l.getTooltip(),s,c,map.getZoom());
         save(l,{icon:curIcon.url,iconW:w,iconH:h,label:txt,labelSize:s,labelColor:c});
       }else save(l,{icon:curIcon.url,iconW:w,iconH:h});
