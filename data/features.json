@@ -1,1 +1,336 @@
-
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "icon": "https://asperance.github.io/EOSmap/img/clearsky.png",
+        "iconW": 30,
+        "iconH": 30,
+        "label": "ЧИСТОЕ НЕБО",
+        "labelSize": "20",
+        "labelColor": "#4682B4"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          312,
+          0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "icon": "https://asperance.github.io/EOSmap/img/bandit.png",
+        "iconW": 30,
+        "iconH": 30,
+        "label": "БАНДИТЫ",
+        "labelSize": "20",
+        "labelColor": "#808080"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1391,
+          872
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "icon": "https://asperance.github.io/EOSmap/img/dolg.png",
+        "iconW": 30,
+        "iconH": 30,
+        "label": "ДОЛГ",
+        "labelSize": "20",
+        "labelColor": "#800000"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          202.5,
+          975.5
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "icon": "https://asperance.github.io/EOSmap/img/odinochki.png",
+        "iconW": 30,
+        "iconH": 30,
+        "label": "База новичков",
+        "labelSize": "20",
+        "labelColor": "#D2691E"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1263,
+          180.5
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "icon": "https://asperance.github.io/EOSmap/img/odinochki.png",
+        "iconW": 30,
+        "iconH": 30,
+        "label": "БАР",
+        "labelSize": "20",
+        "labelColor": "#D2691E"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1594.75,
+          1788.75
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "icon": "https://asperance.github.io/EOSmap/img/svoboda.png",
+        "iconW": 30,
+        "iconH": 30,
+        "label": "СВОБОДА",
+        "labelSize": "20",
+        "labelColor": "#32CD32"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2538.5,
+          820.25
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "icon": "https://asperance.github.io/EOSmap/img/uchenie.png",
+        "iconW": 30,
+        "iconH": 30,
+        "label": "УЧЕНЫЕ",
+        "labelSize": "20",
+        "labelColor": "#00FFFF"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1424,
+          2119.75
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "icon": "https://asperance.github.io/EOSmap/img/voenstal.png",
+        "iconW": 30,
+        "iconH": 30,
+        "label": "ВОЕННЫЕ",
+        "labelSize": "20",
+        "labelColor": "#6B8E23"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1301.5,
+          51.5
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "icon": "https://asperance.github.io/EOSmap/img/naemniki.png",
+        "iconW": 30,
+        "iconH": 30,
+        "label": "НАЕМНИКИ",
+        "labelSize": "20",
+        "labelColor": "#191970"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2017.75,
+          2801.5
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "color": "#ff0000",
+        "fillOpacity": 0.1
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              3256
+            ],
+            [
+              0,
+              6250
+            ],
+            [
+              2874,
+              6250
+            ],
+            [
+              2874,
+              3256
+            ],
+            [
+              0,
+              3256
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "color": "#ff0000",
+        "fillOpacity": 0.1,
+        "radius": 38.8329756778952
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1490,
+          227
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "color": "#ff0000",
+        "fillOpacity": 0.1,
+        "radius": 44.94441010848846
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1932,
+          61
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "color": "#ff0000",
+        "fillOpacity": 0.1,
+        "radius": 72.56721022610694
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          22,
+          1245
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "color": "#ff0000",
+        "fillOpacity": 0.1,
+        "radius": 104.47966309287182
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          543,
+          1161
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "color": "#ff0000",
+        "fillOpacity": 0.1,
+        "radius": 105.3612832116238
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          897,
+          1483
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "color": "#ff0000",
+        "fillOpacity": 0.1,
+        "radius": 57.584720195551874
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2699,
+          1164
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "color": "#ff0000",
+        "fillOpacity": 0.1,
+        "radius": 73.55270219373317
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1945,
+          1659
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "color": "#ff0000",
+        "fillOpacity": 0.1,
+        "radius": 102.42070103255493
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2274,
+          2354
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "color": "#ff0000",
+        "fillOpacity": 0.1,
+        "radius": 100.62305898749054
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          875,
+          2565
+        ]
+      }
+    }
+  ]
+}
