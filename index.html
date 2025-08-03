@@ -3,17 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>EOS Map</title>
+  <title>EOS Map (edit mode)</title>
 
   <!-- Leaflet core -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- Leaflet-Geoman: стабильный CDN jsDelivr -->
+  <!-- Leaflet‑Geoman → стабильный дистрибутив на jsDelivr 2.15.0 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.15.0/dist/leaflet-geoman.css" />
 
   <style>
-    /* высота на весь экран + тёмный фон */
     html,body,#map{height:100%;margin:0;background:#111}
-    /* если карта уедет за пределы, будет видно именно этот цвет */
     .leaflet-container{background:#111}
   </style>
 </head>
@@ -25,15 +23,15 @@
 <script src="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.15.0/dist/leaflet-geoman.min.js"></script>
 
 <script>
-  // Относительный путь к файлу карты
+  // Путь к подложке карты
   const imgSrc = 'img/map.png';
 
-  // Динамически определяем размеры PNG, чтобы не прописывать вручную
+  // Загружаем изображение, узнаём размеры -> инициализируем карту
   const img = new Image();
   img.onload = () => {
-    const WIDTH  = img.naturalWidth;
-    const HEIGHT = img.naturalHeight;
-    const bounds = [[0,0],[HEIGHT,WIDTH]];  // CRS.Simple [y,x]
+    const W = img.naturalWidth;
+    const H = img.naturalHeight;
+    const bounds = [[0,0],[H,W]];
 
     const map = L.map('map', {
       crs: L.CRS.Simple,
@@ -44,31 +42,55 @@
 
     L.imageOverlay(imgSrc, bounds).addTo(map);
     map.fitBounds(bounds);
-    /* --- Ближе к карте при старте (+1 уровень) --- */
-    map.zoomIn(1);  // можно изменить число, чтобы сильнее приблизить
+    map.zoomIn(1);  // стартуем чуть ближе
     map.setMaxBounds(bounds);
 
-    // Проверяем доступность Geoman
-    if (map.pm) {
-      map.pm.addControls({
-        position: 'topleft',
-        drawMarker: true,
-        drawCircle: true,
-        drawPolygon: true,
-        editMode: true,
-        removalMode: true
-      });
-
-      const dump = () => {
-        const gj = L.PM.Utils.findLayers(map).toGeoJSON();
-        console.log('GeoJSON:', JSON.stringify(gj, null, 2));
-      };
-      map.on('pm:create pm:edit pm:remove', dump);
-    } else {
-      console.error('Leaflet-Geoman не загрузился — проверьте ссылки на CDN.');
+    /* === Leaflet‑Geoman === */
+    if (!map.pm) {
+      console.error('Geoman не загрузился — проверьте CDN');
+      return;
     }
+
+    map.pm.addControls({
+      position: 'topleft',
+      drawMarker: true,
+      drawCircle: true,
+      drawPolygon: true,
+      editMode: true,
+      dragMode: true,
+      removalMode: true
+    });
+
+    /* Загружаем ранее сохранённые объекты, если файл существует */
+    fetch('data/features.json')
+      .then(r => r.ok ? r.json() : null)
+      .then(gj => {
+        if (gj) L.geoJSON(gj).eachLayer(l => l.addTo(map));
+      })
+      .catch(()=>{});
+
+    /* === Кнопка «💾» — сохранить GeoJSON === */
+    const saveCtrl = L.control({position:'topleft'});
+    saveCtrl.onAdd = () => {
+      const div = L.DomUtil.create('div','leaflet-bar leaflet-control');
+      div.innerHTML = '<a href="#" title="Save GeoJSON">💾</a>';
+      div.style.cursor = 'pointer';
+      div.onclick = e => {
+        e.preventDefault();
+        const gj = L.PM.Utils.findLayers(map).toGeoJSON();
+        const blob = new Blob([JSON.stringify(gj, null, 2)], {type:'application/json'});
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url;
+        a.download = 'features.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+      return div;
+    };
+    saveCtrl.addTo(map);
   };
-  img.onerror = () => console.error('Не удалось загрузить картинку карты по пути', imgSrc);
+  img.onerror = () => console.error('Не удалось загрузить', imgSrc);
   img.src = imgSrc;
 </script>
 </body>
