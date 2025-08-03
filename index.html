@@ -14,7 +14,6 @@
  .icon-box img{width:24px;height:24px;margin:2px;cursor:pointer}
  .icon-box img.sel{outline:2px solid #0f0}
 
-.leaflet-tooltip.label-no-bg{position:absolute!important}
 </style>
 
 <style>
@@ -135,15 +134,7 @@ function init(img,iconList){
       if(tt){tt.options.offset=[nw/2+5,-nh/2];tt._updatePosition();}
     });
   });
-
-  map.on('zoom', ()=>{
-    const z=map.getZoom();
-    markers.forEach(m=>{
-      const k=Math.pow(2,z-m.baseZoom), nw=m.baseW*k, nh=m.baseH*k;
-      const tt=m.layer.getTooltip();
-      if(tt){ tt.options.offset=[nw/2+5,-nh/2]; tt._updatePosition(); }
-    });
-  });
+});
 
   fetch('data/features.json').then(r=>r.ok?r.json():null).then(gj=>{
     if(!gj) return;
