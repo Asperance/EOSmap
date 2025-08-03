@@ -4,15 +4,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>EOS Map — редактор</title>
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.15.0/dist/leaflet-geoman.css">
+
 <style>
- html,body,#map{height:100%;margin:0;background:#111}
- .leaflet-container{background:#111}
- .label-no-bg{background:transparent!important;border:none!important;padding:0!important;pointer-events:none;white-space:nowrap}
- .icon-box{background:#222;padding:4px;max-height:160px;overflow-y:auto}
- .icon-box img{width:24px;height:24px;margin:2px;cursor:pointer}
- .icon-box img.sel{outline:2px solid #0f0}
+  html,body,#map{height:100%;margin:0;background:#111}
+  .leaflet-container{background:#111}
+
+  .label-no-bg{
+    background:transparent!important;border:none!important;
+    padding:0!important;pointer-events:none;white-space:nowrap
+  }
+
+  .icon-box{background:#222;padding:4px;max-height:160px;overflow-y:auto}
+  .icon-box img{width:24px;height:24px;margin:2px;cursor:pointer}
+  .icon-box img.sel{outline:2px solid #0f0}
+
+  /* отключаем стрелочку у подписей */
+  .leaflet-tooltip.no-arrow::before { display: none !important; }
 </style>
 </head>
 <body><div id="map"></div>
@@ -21,7 +31,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.15.0/dist/leaflet-geoman.min.js" defer></script>
 <script defer>
 const MAP_IMG='img/map.png', ICONS_JSON='img/icons.json', STROKE_PX=0;
-let baseZoom=0,textMode=false;
+let baseZoom=0;
 const labels=[],markers=[];
 let curIcon={url:'',w:32,h:32};
 
@@ -33,9 +43,11 @@ function init(img,iconList){
   const bounds=[[0,0],[img.naturalHeight,img.naturalWidth]];
   const map=L.map('map',{crs:L.CRS.Simple,minZoom:-5,maxZoom:2});
   baseZoom=map.getZoom();
+
   L.imageOverlay(MAP_IMG,bounds).addTo(map);
   map.fitBounds(bounds);
   map.setZoom(-1);
+
   const OVERPAN=500;
   map.setMaxBounds([[-OVERPAN,-OVERPAN],[img.naturalHeight+OVERPAN,img.naturalWidth+OVERPAN]]);
 
@@ -55,28 +67,6 @@ function init(img,iconList){
       return box;}});
     map.addControl(new Palette());
   }
-
-  /*const Txt=L.Control.extend({options:{position:'topright'},onAdd(){
-    const d=L.DomUtil.create('div','leaflet-bar leaflet-control');
-    d.innerHTML='<a href="#" title="Добавить текст">🖉</a>';
-    const paint=()=>d.style.background=textMode?'#666':'#fff';
-    d.onclick=e=>{e.preventDefault();textMode=!textMode;paint();};
-    paint();return d;}});
-  map.addControl(new Txt());*/
-
-  map.on('click',e=>{
-    if(!textMode) return;
-    const txt=prompt('Текст подписи:',''); if(!txt){textMode=false;return;}
-    const size=prompt('Размер текста (px):','14')||'14';
-    let col=prompt('HEX текст (#ffffff):','#ffffff')||'#ffffff';
-    if(col[0]!=='#') col='#'+col;
-    const m=L.marker(e.latlng,{icon:L.icon({iconUrl:'',iconSize:[1,1]})}).addTo(map);
-    m.bindTooltip(txt,{permanent:true,direction:'right',className:'label-no-bg',offset:[5,0]}).openTooltip();
-    styleTip(m.getTooltip(),size,col,map.getZoom());
-    save(m,{label:txt,labelSize:size,labelColor:col,iconW:1,iconH:1});
-    markers.push({layer:m,baseW:1,baseH:1,baseZoom:map.getZoom()});
-    textMode=false;
-  });
 
   map.on('pm:create',ev=>{
     const l=ev.layer;
@@ -100,7 +90,7 @@ function init(img,iconList){
         let c=prompt('HEX цвет текста (ffffff):','#ffffff')||'#ffffff';
         if(c[0]!=='#') c='#'+c;
         if(!/^#?[0-9a-fA-F]{6}$/.test(c)) c='#ffffff';
-        l.bindTooltip(txt,{permanent:true,direction:'right',className:'label-no-bg',offset:[w/2+5,0]}).openTooltip();
+        l.bindTooltip(txt,{permanent:true,direction:'right',className:'label-no-bg no-arrow',offset:[w/2+5,0]}).openTooltip();
         styleTip(l.getTooltip(),s,c,map.getZoom());
         save(l,{icon:curIcon.url,iconW:w,iconH:h,label:txt,labelSize:s,labelColor:c});
       }else save(l,{icon:curIcon.url,iconW:w,iconH:h});
@@ -142,7 +132,7 @@ function init(img,iconList){
         }
         if(l instanceof L.Marker && f.properties && f.properties.label){
           const w=f.properties.iconW||32;
-          l.bindTooltip(f.properties.label,{permanent:true,direction:'right',className:'label-no-bg',offset:[w/2+5,0]}).openTooltip();
+          l.bindTooltip(f.properties.label,{permanent:true,direction:'right',className:'label-no-bg no-arrow',offset:[w/2+5,0]}).openTooltip();
           styleTip(l.getTooltip(),f.properties.labelSize,f.properties.labelColor,map.getZoom());
         }
       }
